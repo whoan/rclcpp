@@ -88,6 +88,17 @@ if(BUILD_TESTING)
     )
   endif()
 
+  ament_add_gtest(test_client_server_integration test/test_client_server_integration.cpp)
+  if(TARGET test_client_server_integration)
+    ament_target_dependencies(test_client_server_integration
+      "rclcpp"
+      "test_msgs"
+    )
+    target_link_libraries(test_client_server_integration
+      ${PROJECT_NAME}
+    )
+  endif()
+
   ament_add_gtest(test_traits test/test_traits.cpp)
   if(TARGET test_traits)
     ament_target_dependencies(test_traits
