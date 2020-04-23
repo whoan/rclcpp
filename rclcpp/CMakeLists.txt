@@ -221,6 +221,32 @@ if(BUILD_TESTING)
 
   add_definitions(-DTEST_RESOURCES_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test/resources")
 
+  find_package(rosidl_default_generators REQUIRED)
+  find_package(rosidl_runtime_cpp REQUIRED)
+  find_package(std_msgs REQUIRED)
+
+  rosidl_generate_interfaces(${PROJECT_NAME}_interfaces
+    test/msg/Stamped.msg
+    DEPENDENCIES std_msgs
+    SKIP_INSTALL
+  )
+
+  ament_add_gtest(test_my_msg test/test_my_msg.cpp
+    APPEND_LIBRARY_DIRS "${CMAKE_CURRENT_BINARY_DIR}"
+  )
+  if(TARGET test_my_msg)
+    rosidl_target_interfaces(test_my_msg rclcpp_interfaces "rosidl_typesupport_cpp")
+    target_link_libraries(test_my_msg
+      ${PROJECT_NAME}
+    )
+    ament_target_dependencies(test_my_msg
+      "std_msgs"
+    )
+    rosidl_target_interfaces(test_my_msg rclcpp_interfaces "rosidl_typesupport_cpp")
+    rosidl_target_interfaces(test_my_msg rclcpp_interfaces "rosidl_typesupport_fastrtps_cpp")
+    target_link_libraries(test_my_msg ${PROJECT_NAME})
+  endif()
+
   ament_add_gtest(test_client test/test_client.cpp)
   if(TARGET test_client)
     ament_target_dependencies(test_client
