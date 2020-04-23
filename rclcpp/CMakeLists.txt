@@ -228,6 +228,7 @@ if(BUILD_TESTING)
   rosidl_generate_interfaces(${PROJECT_NAME}_interfaces
     test/msg/Stamped.msg
     DEPENDENCIES std_msgs
+    LIBRARY_NAME ${PROJECT_NAME}
     SKIP_INSTALL
   )
 
@@ -235,15 +236,10 @@ if(BUILD_TESTING)
     APPEND_LIBRARY_DIRS "${CMAKE_CURRENT_BINARY_DIR}"
   )
   if(TARGET test_my_msg)
-    rosidl_target_interfaces(test_my_msg rclcpp_interfaces "rosidl_typesupport_cpp")
-    target_link_libraries(test_my_msg
-      ${PROJECT_NAME}
-    )
     ament_target_dependencies(test_my_msg
       "std_msgs"
     )
     rosidl_target_interfaces(test_my_msg rclcpp_interfaces "rosidl_typesupport_cpp")
-    rosidl_target_interfaces(test_my_msg rclcpp_interfaces "rosidl_typesupport_fastrtps_cpp")
     target_link_libraries(test_my_msg ${PROJECT_NAME})
   endif()
 
