@@ -162,10 +162,12 @@ endforeach()
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 
-add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME}_library
   ${${PROJECT_NAME}_SRCS})
+set_target_properties(${PROJECT_NAME}_library
+  PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 # specific order: dependents before dependencies
-ament_target_dependencies(${PROJECT_NAME}
+ament_target_dependencies(${PROJECT_NAME}_library
   "libstatistics_collector"
   "rcl"
   "rcl_yaml_param_parser"
@@ -181,11 +183,11 @@ ament_target_dependencies(${PROJECT_NAME}
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(${PROJECT_NAME}
+target_compile_definitions(${PROJECT_NAME}_library
   PRIVATE "RCLCPP_BUILDING_LIBRARY")
 
 install(
-  TARGETS ${PROJECT_NAME}
+  TARGETS ${PROJECT_NAME}_library
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -193,7 +195,7 @@ install(
 
 # specific order: dependents before dependencies
 ament_export_include_directories(include)
-ament_export_libraries(${PROJECT_NAME})
+ament_export_libraries(${PROJECT_NAME}_library)
 
 ament_export_dependencies(libstatistics_collector)
 ament_export_dependencies(rcl)
@@ -225,7 +227,7 @@ if(BUILD_TESTING)
   find_package(rosidl_runtime_cpp REQUIRED)
   find_package(std_msgs REQUIRED)
 
-  rosidl_generate_interfaces(${PROJECT_NAME}_interfaces
+  rosidl_generate_interfaces(${PROJECT_NAME}
     test/msg/Stamped.msg
     DEPENDENCIES std_msgs
     SKIP_INSTALL
@@ -235,16 +237,16 @@ if(BUILD_TESTING)
     APPEND_LIBRARY_DIRS "${CMAKE_CURRENT_BINARY_DIR}"
   )
   if(TARGET test_my_msg)
-    rosidl_target_interfaces(test_my_msg rclcpp_interfaces "rosidl_typesupport_cpp")
+    rosidl_target_interfaces(test_my_msg ${PROJECT_NAME} "rosidl_typesupport_cpp")
     target_link_libraries(test_my_msg
-      ${PROJECT_NAME}
+      ${PROJECT_NAME}_library
     )
     ament_target_dependencies(test_my_msg
       "std_msgs"
     )
-    rosidl_target_interfaces(test_my_msg rclcpp_interfaces "rosidl_typesupport_cpp")
-    rosidl_target_interfaces(test_my_msg rclcpp_interfaces "rosidl_typesupport_fastrtps_cpp")
-    target_link_libraries(test_my_msg ${PROJECT_NAME})
+    rosidl_target_interfaces(test_my_msg ${PROJECT_NAME} "rosidl_typesupport_cpp")
+    rosidl_target_interfaces(test_my_msg ${PROJECT_NAME} "rosidl_typesupport_fastrtps_cpp")
+    target_link_libraries(test_my_msg ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_client test/test_client.cpp)
@@ -255,7 +257,7 @@ if(BUILD_TESTING)
       "rosidl_runtime_cpp"
       "rosidl_typesupport_cpp"
     )
-    target_link_libraries(test_client ${PROJECT_NAME})
+    target_link_libraries(test_client ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_create_timer test/test_create_timer.cpp)
   if(TARGET test_create_timer)
@@ -266,7 +268,7 @@ if(BUILD_TESTING)
       "rosidl_runtime_cpp"
       "rosidl_typesupport_cpp"
     )
-    target_link_libraries(test_create_timer ${PROJECT_NAME})
+    target_link_libraries(test_create_timer ${PROJECT_NAME}_library)
     target_include_directories(test_create_timer PRIVATE test/)
   endif()
   ament_add_gtest(test_expand_topic_or_service_name test/test_expand_topic_or_service_name.cpp)
@@ -277,7 +279,7 @@ if(BUILD_TESTING)
       "rosidl_runtime_cpp"
       "rosidl_typesupport_cpp"
     )
-    target_link_libraries(test_expand_topic_or_service_name ${PROJECT_NAME})
+    target_link_libraries(test_expand_topic_or_service_name ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_function_traits test/test_function_traits.cpp)
   if(TARGET test_function_traits)
@@ -297,7 +299,7 @@ if(BUILD_TESTING)
       "rosidl_runtime_cpp"
       "rosidl_typesupport_cpp"
     )
-    target_link_libraries(test_intra_process_manager ${PROJECT_NAME})
+    target_link_libraries(test_intra_process_manager ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_ring_buffer_implementation test/test_ring_buffer_implementation.cpp)
   if(TARGET test_ring_buffer_implementation)
@@ -307,7 +309,7 @@ if(BUILD_TESTING)
       "rosidl_runtime_cpp"
       "rosidl_typesupport_cpp"
     )
-    target_link_libraries(test_ring_buffer_implementation ${PROJECT_NAME})
+    target_link_libraries(test_ring_buffer_implementation ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_intra_process_buffer test/test_intra_process_buffer.cpp)
   if(TARGET test_intra_process_buffer)
@@ -317,14 +319,14 @@ if(BUILD_TESTING)
       "rosidl_runtime_cpp"
       "rosidl_typesupport_cpp"
     )
-    target_link_libraries(test_intra_process_buffer ${PROJECT_NAME})
+    target_link_libraries(test_intra_process_buffer ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_loaned_message test/test_loaned_message.cpp)
   ament_target_dependencies(test_loaned_message
     "test_msgs"
   )
-  target_link_libraries(test_loaned_message ${PROJECT_NAME})
+  target_link_libraries(test_loaned_message ${PROJECT_NAME}_library)
 
   ament_add_gtest(test_node test/test_node.cpp TIMEOUT 240)
   if(TARGET test_node)
@@ -336,35 +338,35 @@ if(BUILD_TESTING)
       "rosidl_typesupport_cpp"
       "test_msgs"
     )
-    target_link_libraries(test_node ${PROJECT_NAME})
+    target_link_libraries(test_node ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_node_interfaces__get_node_interfaces
     test/node_interfaces/test_get_node_interfaces.cpp)
   if(TARGET test_node_interfaces__get_node_interfaces)
-    target_link_libraries(test_node_interfaces__get_node_interfaces ${PROJECT_NAME})
+    target_link_libraries(test_node_interfaces__get_node_interfaces ${PROJECT_NAME}_library)
   endif()
 
   # TODO(wjwwood): reenable these build failure tests when I can get Jenkins to ignore their output
   # rclcpp_add_build_failure_test(build_failure__get_node_topics_interface_const_ref_rclcpp_node
   #   test/node_interfaces/test_does_not_compile/get_node_topics_interface_const_ref_rclcpp_node.cpp)
   # target_link_libraries(build_failure__get_node_topics_interface_const_ref_rclcpp_node
-  #   ${PROJECT_NAME})
+  #   ${PROJECT_NAME}_library)
 
   # rclcpp_add_build_failure_test(build_failure__get_node_topics_interface_const_ptr_rclcpp_node
   #   test/node_interfaces/test_does_not_compile/get_node_topics_interface_const_ptr_rclcpp_node.cpp)
   # target_link_libraries(build_failure__get_node_topics_interface_const_ptr_rclcpp_node
-  #   ${PROJECT_NAME})
+  #   ${PROJECT_NAME}_library)
 
   # rclcpp_add_build_failure_test(build_failure__get_node_topics_interface_const_ref_wrapped_node
   #   test/node_interfaces/test_does_not_compile/get_node_topics_interface_const_ref_wrapped_node.cpp)
   # target_link_libraries(build_failure__get_node_topics_interface_const_ref_rclcpp_node
-  #   ${PROJECT_NAME})
+  #   ${PROJECT_NAME}_library)
 
   # rclcpp_add_build_failure_test(build_failure__get_node_topics_interface_const_ptr_wrapped_node
   #   test/node_interfaces/test_does_not_compile/get_node_topics_interface_const_ptr_wrapped_node.cpp)
   # target_link_libraries(build_failure__get_node_topics_interface_const_ptr_rclcpp_node
-  #   ${PROJECT_NAME})
+  #   ${PROJECT_NAME}_library)
 
   ament_add_gtest(test_node_global_args test/test_node_global_args.cpp)
   if(TARGET test_node_global_args)
@@ -374,19 +376,19 @@ if(BUILD_TESTING)
       "rosidl_runtime_cpp"
       "rosidl_typesupport_cpp"
     )
-    target_link_libraries(test_node_global_args ${PROJECT_NAME})
+    target_link_libraries(test_node_global_args ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_node_options test/test_node_options.cpp)
   if(TARGET test_node_options)
     ament_target_dependencies(test_node_options "rcl")
-    target_link_libraries(test_node_options ${PROJECT_NAME})
+    target_link_libraries(test_node_options ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_parameter_client test/test_parameter_client.cpp)
   if(TARGET test_parameter_client)
     ament_target_dependencies(test_parameter_client
       "rcl_interfaces"
     )
-    target_link_libraries(test_parameter_client ${PROJECT_NAME})
+    target_link_libraries(test_parameter_client ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_parameter_events_filter test/test_parameter_events_filter.cpp)
   if(TARGET test_parameter_events_filter)
@@ -396,7 +398,7 @@ if(BUILD_TESTING)
       "rosidl_runtime_cpp"
       "rosidl_typesupport_cpp"
     )
-    target_link_libraries(test_parameter_events_filter ${PROJECT_NAME})
+    target_link_libraries(test_parameter_events_filter ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_parameter test/test_parameter.cpp)
   if(TARGET test_parameter)
@@ -406,11 +408,11 @@ if(BUILD_TESTING)
       "rosidl_runtime_cpp"
       "rosidl_typesupport_cpp"
     )
-    target_link_libraries(test_parameter ${PROJECT_NAME})
+    target_link_libraries(test_parameter ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_parameter_map test/test_parameter_map.cpp)
   if(TARGET test_parameter_map)
-    target_link_libraries(test_parameter_map ${PROJECT_NAME})
+    target_link_libraries(test_parameter_map ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_publisher test/test_publisher.cpp)
   if(TARGET test_publisher)
@@ -420,7 +422,7 @@ if(BUILD_TESTING)
       "rosidl_typesupport_cpp"
       "test_msgs"
     )
-    target_link_libraries(test_publisher ${PROJECT_NAME})
+    target_link_libraries(test_publisher ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_publisher_subscription_count_api test/test_publisher_subscription_count_api.cpp)
   if(TARGET test_publisher_subscription_count_api)
@@ -431,7 +433,7 @@ if(BUILD_TESTING)
       "rosidl_typesupport_cpp"
       "test_msgs"
     )
-    target_link_libraries(test_publisher_subscription_count_api ${PROJECT_NAME})
+    target_link_libraries(test_publisher_subscription_count_api ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_qos test/test_qos.cpp)
   if(TARGET test_qos)
@@ -439,7 +441,7 @@ if(BUILD_TESTING)
       "rmw"
     )
     target_link_libraries(test_qos
-      ${PROJECT_NAME}
+      ${PROJECT_NAME}_library
     )
   endif()
   ament_add_gtest(test_qos_event test/test_qos_event.cpp)
@@ -449,7 +451,7 @@ if(BUILD_TESTING)
       "test_msgs"
     )
     target_link_libraries(test_qos_event
-      ${PROJECT_NAME}
+      ${PROJECT_NAME}_library
     )
   endif()
   ament_add_gtest(test_rate test/test_rate.cpp)
@@ -461,7 +463,7 @@ if(BUILD_TESTING)
       "rosidl_typesupport_cpp"
     )
     target_link_libraries(test_rate
-      ${PROJECT_NAME}
+      ${PROJECT_NAME}_library
     )
   endif()
   ament_add_gtest(test_serialized_message_allocator test/test_serialized_message_allocator.cpp)
@@ -470,7 +472,7 @@ if(BUILD_TESTING)
       test_msgs
     )
     target_link_libraries(test_serialized_message_allocator
-      ${PROJECT_NAME}
+      ${PROJECT_NAME}_library
     )
   endif()
   ament_add_gtest(test_serialized_message test/test_serialized_message.cpp)
@@ -479,7 +481,7 @@ if(BUILD_TESTING)
       test_msgs
     )
     target_link_libraries(test_serialized_message
-      ${PROJECT_NAME}
+      ${PROJECT_NAME}_library
     )
   endif()
   ament_add_gtest(test_service test/test_service.cpp)
@@ -490,7 +492,7 @@ if(BUILD_TESTING)
       "rosidl_runtime_cpp"
       "rosidl_typesupport_cpp"
     )
-    target_link_libraries(test_service ${PROJECT_NAME})
+    target_link_libraries(test_service ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_subscription test/test_subscription.cpp)
   if(TARGET test_subscription)
@@ -501,7 +503,7 @@ if(BUILD_TESTING)
       "rosidl_typesupport_cpp"
       "test_msgs"
     )
-    target_link_libraries(test_subscription ${PROJECT_NAME})
+    target_link_libraries(test_subscription ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_subscription_publisher_count_api test/test_subscription_publisher_count_api.cpp)
   if(TARGET test_subscription_publisher_count_api)
@@ -512,7 +514,7 @@ if(BUILD_TESTING)
       "rosidl_typesupport_cpp"
       "test_msgs"
     )
-    target_link_libraries(test_subscription_publisher_count_api ${PROJECT_NAME})
+    target_link_libraries(test_subscription_publisher_count_api ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_subscription_traits test/test_subscription_traits.cpp)
   if(TARGET test_subscription_traits)
@@ -520,14 +522,14 @@ if(BUILD_TESTING)
       "rcl"
       "test_msgs"
     )
-    target_link_libraries(test_subscription_traits ${PROJECT_NAME})
+    target_link_libraries(test_subscription_traits ${PROJECT_NAME}_library)
   endif()
   ament_add_gtest(test_find_weak_nodes test/test_find_weak_nodes.cpp)
   if(TARGET test_find_weak_nodes)
     ament_target_dependencies(test_find_weak_nodes
       "rcl"
     )
-    target_link_libraries(test_find_weak_nodes ${PROJECT_NAME})
+    target_link_libraries(test_find_weak_nodes ${PROJECT_NAME}_library)
   endif()
 
   set(append_library_dirs "${CMAKE_CURRENT_BINARY_DIR}")
@@ -540,14 +542,14 @@ if(BUILD_TESTING)
     "rcl"
     "test_msgs"
   )
-  target_link_libraries(test_externally_defined_services ${PROJECT_NAME})
+  target_link_libraries(test_externally_defined_services ${PROJECT_NAME}_library)
 
   ament_add_gtest(test_duration test/test_duration.cpp
     APPEND_LIBRARY_DIRS "${append_library_dirs}")
   if(TARGET test_duration)
     ament_target_dependencies(test_duration
       "rcl")
-    target_link_libraries(test_duration ${PROJECT_NAME})
+    target_link_libraries(test_duration ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_executor test/test_executor.cpp
@@ -555,21 +557,21 @@ if(BUILD_TESTING)
   if(TARGET test_executor)
     ament_target_dependencies(test_executor
       "rcl")
-    target_link_libraries(test_executor ${PROJECT_NAME})
+    target_link_libraries(test_executor ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_logger test/test_logger.cpp)
-  target_link_libraries(test_logger ${PROJECT_NAME})
+  target_link_libraries(test_logger ${PROJECT_NAME}_library)
 
   ament_add_gmock(test_logging test/test_logging.cpp)
-  target_link_libraries(test_logging ${PROJECT_NAME})
+  target_link_libraries(test_logging ${PROJECT_NAME}_library)
 
   ament_add_gtest(test_time test/test_time.cpp
     APPEND_LIBRARY_DIRS "${append_library_dirs}")
   if(TARGET test_time)
     ament_target_dependencies(test_time
       "rcl")
-    target_link_libraries(test_time ${PROJECT_NAME})
+    target_link_libraries(test_time ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_timer test/test_timer.cpp
@@ -577,7 +579,7 @@ if(BUILD_TESTING)
   if(TARGET test_timer)
     ament_target_dependencies(test_timer
       "rcl")
-    target_link_libraries(test_timer ${PROJECT_NAME})
+    target_link_libraries(test_timer ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_time_source test/test_time_source.cpp
@@ -585,7 +587,7 @@ if(BUILD_TESTING)
   if(TARGET test_time_source)
     ament_target_dependencies(test_time_source
       "rcl")
-    target_link_libraries(test_time_source ${PROJECT_NAME})
+    target_link_libraries(test_time_source ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_utilities test/test_utilities.cpp
@@ -593,7 +595,7 @@ if(BUILD_TESTING)
   if(TARGET test_utilities)
     ament_target_dependencies(test_utilities
       "rcl")
-    target_link_libraries(test_utilities ${PROJECT_NAME})
+    target_link_libraries(test_utilities ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_init test/test_init.cpp
@@ -601,7 +603,7 @@ if(BUILD_TESTING)
   if(TARGET test_init)
     ament_target_dependencies(test_init
       "rcl")
-    target_link_libraries(test_init ${PROJECT_NAME})
+    target_link_libraries(test_init ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_interface_traits test/test_interface_traits.cpp
@@ -609,7 +611,7 @@ if(BUILD_TESTING)
   if(TARGET test_interface_traits)
     ament_target_dependencies(test_interface_traits
       "rcl")
-    target_link_libraries(test_interface_traits ${PROJECT_NAME})
+    target_link_libraries(test_interface_traits ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_multi_threaded_executor test/executors/test_multi_threaded_executor.cpp
@@ -617,20 +619,20 @@ if(BUILD_TESTING)
   if(TARGET test_multi_threaded_executor)
     ament_target_dependencies(test_multi_threaded_executor
       "rcl")
-    target_link_libraries(test_multi_threaded_executor ${PROJECT_NAME})
+    target_link_libraries(test_multi_threaded_executor ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_guard_condition test/test_guard_condition.cpp
     APPEND_LIBRARY_DIRS "${append_library_dirs}")
   if(TARGET test_guard_condition)
-    target_link_libraries(test_guard_condition ${PROJECT_NAME})
+    target_link_libraries(test_guard_condition ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_wait_set test/test_wait_set.cpp
     APPEND_LIBRARY_DIRS "${append_library_dirs}")
   if(TARGET test_wait_set)
     ament_target_dependencies(test_wait_set "test_msgs")
-    target_link_libraries(test_wait_set ${PROJECT_NAME})
+    target_link_libraries(test_wait_set ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_subscription_topic_statistics test/topic_statistics/test_subscription_topic_statistics.cpp)
@@ -644,13 +646,13 @@ if(BUILD_TESTING)
       "rosidl_typesupport_cpp"
       "statistics_msgs"
       "test_msgs")
-    target_link_libraries(test_subscription_topic_statistics ${PROJECT_NAME})
+    target_link_libraries(test_subscription_topic_statistics ${PROJECT_NAME}_library)
   endif()
 
   ament_add_gtest(test_subscription_options test/test_subscription_options.cpp)
   if(TARGET test_subscription_options)
     ament_target_dependencies(test_subscription_options "rcl")
-    target_link_libraries(test_subscription_options ${PROJECT_NAME})
+    target_link_libraries(test_subscription_options ${PROJECT_NAME}_library)
   endif()
 
   # Install test resources
