@@ -133,8 +133,9 @@ public:
 
   /// Execute any entities of the Waitable that are ready.
   void
-  execute() override
+  execute(std::shared_ptr<void>& data) override
   {
+    (void) data;
     EventCallbackInfoT callback_info;
 
     rcl_ret_t ret = rcl_take_event(&event_handle_, &callback_info);
@@ -149,8 +150,9 @@ public:
   }
 
   void
-  take_data() override
+  take_data(std::shared_ptr<void>& data) override
   {
+    (void) data;
     throw std::runtime_error("Test executor should not be called");
   }
 

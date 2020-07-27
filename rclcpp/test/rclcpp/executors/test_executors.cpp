@@ -412,14 +412,17 @@ public:
   }
 
   void
-  execute() override
+  execute(std::shared_ptr<void>& data) override
   {
+    (void) data;
     count_++;
     std::this_thread::sleep_for(1ms);
   }
 
   void
-  take_data() override {}
+  take_data(std::shared_ptr<void>& data) override {
+    (void) data;
+  }
 
   size_t
   get_number_of_ready_guard_conditions() override {return 1;}

@@ -16,6 +16,7 @@
 #define RCLCPP__WAITABLE_HPP_
 
 #include <atomic>
+#include <memory>
 
 #include "rclcpp/macros.hpp"
 #include "rclcpp/visibility_control.hpp"
@@ -129,7 +130,7 @@ public:
   RCLCPP_PUBLIC
   virtual
   void
-  take_data() = 0;
+  take_data(std::shared_ptr<void>& data) = 0;
 
   /// Execute any entities of the Waitable that are ready.
   /**
@@ -155,7 +156,7 @@ public:
   RCLCPP_PUBLIC
   virtual
   void
-  execute() = 0;
+  execute(std::shared_ptr<void>& data) = 0;
 
   /// Exchange the "in use by wait set" state for this timer.
   /**

@@ -188,8 +188,15 @@ ServerBase::is_ready(rcl_wait_set_t * wait_set)
 }
 
 void
-ServerBase::execute()
+ServerBase::take_data(std::shared_ptr<void>& data)
 {
+  (void) data;
+}
+
+void
+ServerBase::execute(std::shared_ptr<void>& data)
+{
+  (void) data;
   if (pimpl_->goal_request_ready_) {
     execute_goal_request_received();
   } else if (pimpl_->cancel_request_ready_) {

@@ -117,12 +117,12 @@ public:
   /// \internal
   RCLCPP_ACTION_PUBLIC
   void
-  take_data() override;
+  take_data(std::shared_ptr<void>& data) override;
 
   /// \internal
   RCLCPP_ACTION_PUBLIC
   void
-  execute() override;
+  execute(std::shared_ptr<void>& data) override;
 
   // End Waitables API
   // -----------------

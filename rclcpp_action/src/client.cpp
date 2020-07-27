@@ -381,8 +381,15 @@ ClientBase::generate_goal_id()
 }
 
 void
-ClientBase::execute()
+ClientBase::take_data(std::shared_ptr<void>& data)
 {
+  (void) data;
+}
+
+void
+ClientBase::execute(std::shared_ptr<void>& data)
+{
+  (void) data;
   if (pimpl_->is_feedback_ready) {
     std::shared_ptr<void> feedback_message = this->create_feedback_message();
     rcl_ret_t ret = rcl_action_take_feedback(

@@ -114,21 +114,30 @@ public:
     return buffer_->has_data();
   }
 
-  void take_data()
+  void take_data(std::shared_ptr<void>& data)
   {
-    std::thread::id thread_id = std::this_thread::get_id();
-    if (any_callback_.use_take_shared_method()) {
-      std::lock_guard<std::mutex> lock(shared_map_mutex_);
-      shared_msg_map_[thread_id] = buffer_->consume_shared();
-    } else {
-      std::lock_guard<std::mutex> lock(unique_map_mutex_);
-      unique_msg_map_[thread_id] = buffer_->consume_unique();
+    if (data) {
+      throw std::runtime_error("Should not be data in the pointer");
     }
+
+    ConstMessageSharedPtr shared_msg;
+    MessageUniquePtr unique_msg;
+
+    if (any_callback_.use_take_shared_method()) {
+      shared_msg = buffer_->consume_shared();
+    } else {
+      unique_msg = buffer_->consume_unique();
+    }
+    data = std::static_pointer_cast<void>(
+      std::make_shared<std::pair<ConstMessageSharedPtr, MessageUniquePtr>>(
+        std::pair<ConstMessageSharedPtr, MessageUniquePtr>(
+          shared_msg, std::move(unique_msg)))
+    );
   }
 
-  void execute()
+  void execute(std::shared_ptr<void>& data)
   {
-    execute_impl<CallbackMessageT>();
+    execute_impl<CallbackMessageT>(data);
   }
 
   void
@@ -161,37 +170,34 @@ private:
 
   template<typename T>
   typename std::enable_if<std::is_same<T, rcl_serialized_message_t>::value, void>::type
-  execute_impl()
+  execute_impl(std::shared_ptr<void>& data)
   {
     throw std::runtime_error("Subscription intra-process can't handle serialized messages");
   }
 
   template<class T>
   typename std::enable_if<!std::is_same<T, rcl_serialized_message_t>::value, void>::type
-  execute_impl()
+  execute_impl(std::shared_ptr<void>& data)
   {
+    if (!data) {
+      throw std::runtime_error("Data is empty");
+    }
+
     rmw_message_info_t msg_info;
     msg_info.publisher_gid = {0, {0}};
     msg_info.from_intra_process = true;
 
-    std::thread::id thread_id = std::this_thread::get_id();
+    auto shared_ptr = std::static_pointer_cast<std::pair<ConstMessageSharedPtr, MessageUniquePtr>>(
+      data);
+
     if (any_callback_.use_take_shared_method()) {
-      ConstMessageSharedPtr shared_msg = shared_msg_map_[thread_id];
+      ConstMessageSharedPtr shared_msg = (*shared_ptr).first;
       any_callback_.dispatch_intra_process(shared_msg, msg_info);
-      shared_msg.reset();
-      {
-        std::lock_guard<std::mutex> lock(shared_map_mutex_);
-        shared_msg_map_.erase(thread_id);
-      }
     } else {
-      MessageUniquePtr unique_msg;
-      {
-        std::lock_guard<std::mutex> lock(unique_map_mutex_);
-        unique_msg = std::move(unique_msg_map_[thread_id]);
-        unique_msg_map_.erase(thread_id);
-      }
+      MessageUniquePtr unique_msg = std::move((*shared_ptr).second);
       any_callback_.dispatch_intra_process(std::move(unique_msg), msg_info);
     }
+    shared_ptr.reset();
   }
 
   AnySubscriptionCallback<CallbackMessageT, Alloc> any_callback_;
