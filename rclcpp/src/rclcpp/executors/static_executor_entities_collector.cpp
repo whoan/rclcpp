@@ -64,13 +64,13 @@ StaticExecutorEntitiesCollector::init(
 }
 
 void
-StaticExecutorEntitiesCollector::take_data(std::shared_ptr<void>& data)
+StaticExecutorEntitiesCollector::take_data(std::shared_ptr<void> & data)
 {
   (void) data;
 }
 
 void
-StaticExecutorEntitiesCollector::execute(std::shared_ptr<void>& data)
+StaticExecutorEntitiesCollector::execute(std::shared_ptr<void> & data)
 {
   (void) data;
   // Fill memory strategy with entities coming from weak_nodes_

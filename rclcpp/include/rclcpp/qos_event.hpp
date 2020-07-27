@@ -16,6 +16,7 @@
 #define RCLCPP__QOS_EVENT_HPP_
 
 #include <functional>
+#include <memory>
 #include <string>
 
 #include "rcl/error_handling.h"
@@ -131,13 +132,15 @@ public:
     }
   }
 
-  /// Execute any entities of the Waitable that are ready.
+  /// Take data so that the callback cannot be called again
   void
-  execute(std::shared_ptr<void>& data) override
+  take_data(std::shared_ptr<void> & data) override
   {
-    (void) data;
-    EventCallbackInfoT callback_info;
+    if (data) {
+      throw std::runtime_error("Should not be data in the pointer");
+    }
 
+    EventCallbackInfoT callback_info;
     rcl_ret_t ret = rcl_take_event(&event_handle_, &callback_info);
     if (ret != RCL_RET_OK) {
       RCUTILS_LOG_ERROR_NAMED(
@@ -145,15 +148,21 @@ public:
         "Couldn't take event info: %s", rcl_get_error_string().str);
       return;
     }
-
-    event_callback_(callback_info);
+    data = std::static_pointer_cast<void>(
+      std::make_shared<EventCallbackInfoT>(
+        callback_info));
   }
 
+  /// Execute any entities of the Waitable that are ready.
   void
-  take_data(std::shared_ptr<void>& data) override
+  execute(std::shared_ptr<void> & data) override
   {
-    (void) data;
-    throw std::runtime_error("Test executor should not be called");
+    if (!data) {
+      throw std::runtime_error("Data is empty");
+    }
+    auto callback_ptr = std::static_pointer_cast<EventCallbackInfoT>(data);
+    event_callback_(*callback_ptr);
+    callback_ptr.reset();
   }
 
 private:

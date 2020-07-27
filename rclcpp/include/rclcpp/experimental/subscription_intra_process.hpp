@@ -110,11 +110,11 @@ public:
   bool
   is_ready(rcl_wait_set_t * wait_set)
   {
-    (void)wait_set;
+    (void) wait_set;
     return buffer_->has_data();
   }
 
-  void take_data(std::shared_ptr<void>& data)
+  void take_data(std::shared_ptr<void> & data)
   {
     if (data) {
       throw std::runtime_error("Should not be data in the pointer");
@@ -135,7 +135,7 @@ public:
     );
   }
 
-  void execute(std::shared_ptr<void>& data)
+  void execute(std::shared_ptr<void> & data)
   {
     execute_impl<CallbackMessageT>(data);
   }
@@ -170,14 +170,14 @@ private:
 
   template<typename T>
   typename std::enable_if<std::is_same<T, rcl_serialized_message_t>::value, void>::type
-  execute_impl(std::shared_ptr<void>& data)
+  execute_impl(std::shared_ptr<void> & data)
   {
     throw std::runtime_error("Subscription intra-process can't handle serialized messages");
   }
 
   template<class T>
   typename std::enable_if<!std::is_same<T, rcl_serialized_message_t>::value, void>::type
-  execute_impl(std::shared_ptr<void>& data)
+  execute_impl(std::shared_ptr<void> & data)
   {
     if (!data) {
       throw std::runtime_error("Data is empty");

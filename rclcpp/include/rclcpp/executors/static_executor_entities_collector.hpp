@@ -64,11 +64,11 @@ public:
 
   RCLCPP_PUBLIC
   void
-  execute(std::shared_ptr<void>& data) override;
+  execute(std::shared_ptr<void> & data) override;
 
   RCLCPP_PUBLIC
   void
-  take_data(std::shared_ptr<void>& data) override;
+  take_data(std::shared_ptr<void> & data) override;
 
   RCLCPP_PUBLIC
   void

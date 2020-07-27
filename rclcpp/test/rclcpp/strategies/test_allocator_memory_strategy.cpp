@@ -46,11 +46,13 @@ public:
     return test_waitable_result;
   }
 
-  void take_data(std::shared_ptr<void>& data) override {
+  void take_data(std::shared_ptr<void> & data) override
+  {
     (void) data;
   }
 
-  void execute(std::shared_ptr<void>& data) override {
+  void execute(std::shared_ptr<void> & data) override
+  {
     (void) data;
   }
 };
