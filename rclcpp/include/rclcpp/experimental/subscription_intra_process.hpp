@@ -21,11 +21,7 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <thread>
 #include <utility>
-
-#include <iostream>
-#include <sstream>
 
 #include "rcl/error_handling.h"
 
@@ -117,7 +113,7 @@ public:
   void take_data(std::shared_ptr<void> & data)
   {
     if (data) {
-      throw std::runtime_error("Should not be data in the pointer");
+      throw std::runtime_error("'data' is not empty");
     }
 
     ConstMessageSharedPtr shared_msg;
@@ -180,7 +176,7 @@ private:
   execute_impl(std::shared_ptr<void> & data)
   {
     if (!data) {
-      throw std::runtime_error("Data is empty");
+      throw std::runtime_error("'data' is empty");
     }
 
     rmw_message_info_t msg_info;
@@ -202,11 +198,6 @@ private:
 
   AnySubscriptionCallback<CallbackMessageT, Alloc> any_callback_;
   BufferUniquePtr buffer_;
-
-  std::mutex unique_map_mutex_;
-  std::mutex shared_map_mutex_;
-  std::map<std::thread::id, MessageUniquePtr> unique_msg_map_;
-  std::map<std::thread::id, ConstMessageSharedPtr> shared_msg_map_;
 };
 
 }  // namespace experimental
