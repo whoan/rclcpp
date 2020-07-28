@@ -126,14 +126,12 @@ public:
   bool
   is_ready(rcl_wait_set_t * wait_set) = 0;
 
-  /// Take the data so that it can be consumed with `execute`
-  RCLCPP_PUBLIC
-  virtual
-  void
-  take_data(std::shared_ptr<void> & data) = 0;
-
-  /// Execute any entities of the Waitable that are ready.
+  /// Take the data so that it can be consumed with `execute`.
   /**
+   * This method takes the data from the underlying data structure and
+   * writes it to the void shared pointer `data` that is passed into the 
+   * method. The `data` can then be executed with the `execute` method.
+   * 
    * Before calling this method, the Waitable should be added to a wait set,
    * waited on, and then updated.
    *
@@ -150,7 +148,37 @@ public:
    * // Update the Waitable
    * waitable.update(wait_set);
    * // Execute any entities of the Waitable that may be ready
-   * waitable.execute();
+   * std::shared_ptr<void> data;
+   * waitable.take_data(data);
+   * ```
+   */
+  RCLCPP_PUBLIC
+  virtual
+  void
+  take_data(std::shared_ptr<void> & data) = 0;
+
+  /// Execute data that is passed in.
+  /**
+   * Before calling this method, the Waitable should be added to a wait set,
+   * waited on, and then updated - and the `take_data` method should be
+   * called.
+   *
+   * Example usage:
+   *
+   * ```cpp
+   * // ... create a wait set and a Waitable
+   * // Add the Waitable to the wait set
+   * bool add_ret = waitable.add_to_wait_set(wait_set);
+   * // ... error handling
+   * // Wait
+   * rcl_ret_t wait_ret = rcl_wait(wait_set);
+   * // ... error handling
+   * // Update the Waitable
+   * waitable.update(wait_set);
+   * // Execute any entities of the Waitable that may be ready
+   * std::shared_ptr<void> data;
+   * waitable.take_data(data);
+   * waitable.execute(data);
    * ```
    */
   RCLCPP_PUBLIC
