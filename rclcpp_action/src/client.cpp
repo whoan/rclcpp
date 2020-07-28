@@ -381,17 +381,17 @@ ClientBase::generate_goal_id()
 }
 
 void
-ClientBase::take_data(std::shared_ptr<void>& data)
+ClientBase::take_data(std::shared_ptr<void> & data)
 {
   if (data) {
-    throw std::runtime_error("Should not be data in the pointer");
+    throw std::runtime_error("'data' is not empty");
   }
+
   if (pimpl_->is_feedback_ready) {
     std::shared_ptr<void> feedback_message = this->create_feedback_message();
     rcl_ret_t ret = rcl_action_take_feedback(
       pimpl_->client_handle.get(), feedback_message.get());
-    pimpl_->is_feedback_ready = false;
-    if (RCL_RET_ACTION_CLIENT_TAKE_FAILED != ret) {
+    if (RCL_RET_OK != ret) {
       rclcpp::exceptions::throw_from_rcl_error(ret, "error taking feedback");
     }
     data = feedback_message;
@@ -399,8 +399,7 @@ ClientBase::take_data(std::shared_ptr<void>& data)
     std::shared_ptr<void> status_message = this->create_status_message();
     rcl_ret_t ret = rcl_action_take_status(
       pimpl_->client_handle.get(), status_message.get());
-    pimpl_->is_status_ready = false;
-    if (RCL_RET_ACTION_CLIENT_TAKE_FAILED != ret) {
+    if (RCL_RET_OK != ret) {
       rclcpp::exceptions::throw_from_rcl_error(ret, "error taking status");
     }
     data = status_message;
@@ -409,8 +408,7 @@ ClientBase::take_data(std::shared_ptr<void>& data)
     std::shared_ptr<void> goal_response = this->create_goal_response();
     rcl_ret_t ret = rcl_action_take_goal_response(
       pimpl_->client_handle.get(), &response_header, goal_response.get());
-    pimpl_->is_goal_response_ready = false;
-    if (RCL_RET_ACTION_CLIENT_TAKE_FAILED != ret) {
+    if (RCL_RET_OK != ret) {
       rclcpp::exceptions::throw_from_rcl_error(ret, "error taking goal response");
     }
     data = std::static_pointer_cast<void>(
@@ -422,8 +420,7 @@ ClientBase::take_data(std::shared_ptr<void>& data)
     std::shared_ptr<void> result_response = this->create_result_response();
     rcl_ret_t ret = rcl_action_take_result_response(
       pimpl_->client_handle.get(), &response_header, result_response.get());
-    pimpl_->is_result_response_ready = false;
-    if (RCL_RET_ACTION_CLIENT_TAKE_FAILED != ret) {
+    if (RCL_RET_OK != ret) {
       rclcpp::exceptions::throw_from_rcl_error(ret, "error taking result response");
     }
     data = std::static_pointer_cast<void>(
@@ -435,8 +432,7 @@ ClientBase::take_data(std::shared_ptr<void>& data)
     std::shared_ptr<void> cancel_response = this->create_cancel_response();
     rcl_ret_t ret = rcl_action_take_cancel_response(
       pimpl_->client_handle.get(), &response_header, cancel_response.get());
-    pimpl_->is_cancel_response_ready = false;
-    if (RCL_RET_ACTION_CLIENT_TAKE_FAILED != ret) {
+    if (RCL_RET_OK != ret) {
       rclcpp::exceptions::throw_from_rcl_error(ret, "error taking cancel response");
     }
     data = std::static_pointer_cast<void>(
@@ -444,33 +440,38 @@ ClientBase::take_data(std::shared_ptr<void>& data)
         std::pair<rmw_request_id_t, std::shared_ptr<void>>(
           response_header, cancel_response)));
   } else {
-    throw std::runtime_error("Executing action client but nothing is ready");
+    throw std::runtime_error("Taking data from action client but nothing is ready");
   }
 }
 
 void
-ClientBase::execute(std::shared_ptr<void>& data)
+ClientBase::execute(std::shared_ptr<void> & data)
 {
   if (!data) {
-    throw std::runtime_error("Data is empty");
+    throw std::runtime_error("'data' is empty");
   }
 
   if (pimpl_->is_feedback_ready) {
     this->handle_feedback_message(data);
+    pimpl_->is_feedback_ready = false;
   } else if (pimpl_->is_status_ready) {
     this->handle_status_message(data);
+    pimpl_->is_status_ready = false;
   } else if (pimpl_->is_goal_response_ready) {
     auto shared_ptr = std::static_pointer_cast<std::pair<rmw_request_id_t, std::shared_ptr<void>>>(
       data);
     this->handle_goal_response((*shared_ptr).first, (*shared_ptr).second);
+    pimpl_->is_goal_response_ready = false;
   } else if (pimpl_->is_result_response_ready) {
     auto shared_ptr = std::static_pointer_cast<std::pair<rmw_request_id_t, std::shared_ptr<void>>>(
       data);
     this->handle_result_response((*shared_ptr).first, (*shared_ptr).second);
+    pimpl_->is_result_response_ready = false;
   } else if (pimpl_->is_cancel_response_ready) {
     auto shared_ptr = std::static_pointer_cast<std::pair<rmw_request_id_t, std::shared_ptr<void>>>(
       data);
     this->handle_cancel_response((*shared_ptr).first, (*shared_ptr).second);
+    pimpl_->is_cancel_response_ready = false;
   } else {
     throw std::runtime_error("Executing action client but nothing is ready");
   }

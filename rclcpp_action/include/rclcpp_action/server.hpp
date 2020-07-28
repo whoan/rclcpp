@@ -233,19 +233,19 @@ private:
   /// \internal
   RCLCPP_ACTION_PUBLIC
   void
-  execute_goal_request_received();
+  execute_goal_request_received(std::shared_ptr<void> & data);
 
   /// Handle a request to cancel goals on the server
   /// \internal
   RCLCPP_ACTION_PUBLIC
   void
-  execute_cancel_request_received();
+  execute_cancel_request_received(std::shared_ptr<void> & data);
 
   /// Handle a request to get the result of an action
   /// \internal
   RCLCPP_ACTION_PUBLIC
   void
-  execute_result_request_received();
+  execute_result_request_received(std::shared_ptr<void> & data);
 
   /// Handle a timeout indicating a completed goal should be forgotten by the server
   /// \internal
