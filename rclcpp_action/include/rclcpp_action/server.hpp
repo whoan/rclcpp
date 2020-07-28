@@ -120,13 +120,13 @@ public:
 
   RCLCPP_ACTION_PUBLIC
   void
-  take_data(std::shared_ptr<void>& data) override;
+  take_data(std::shared_ptr<void> & data) override;
 
   /// Act on entities in the wait set which are ready to be acted upon.
   /// \internal
   RCLCPP_ACTION_PUBLIC
   void
-  execute(std::shared_ptr<void>& data) override;
+  execute(std::shared_ptr<void> & data) override;
 
   // End Waitables API
   // -----------------
