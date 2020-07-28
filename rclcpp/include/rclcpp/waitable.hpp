@@ -129,9 +129,9 @@ public:
   /// Take the data so that it can be consumed with `execute`.
   /**
    * This method takes the data from the underlying data structure and
-   * writes it to the void shared pointer `data` that is passed into the 
+   * writes it to the void shared pointer `data` that is passed into the
    * method. The `data` can then be executed with the `execute` method.
-   * 
+   *
    * Before calling this method, the Waitable should be added to a wait set,
    * waited on, and then updated.
    *
