@@ -209,17 +209,10 @@ ServerBase::take_data(std::shared_ptr<void> & data)
       &request_header,
       message.get());
 
-    if (RCL_RET_ACTION_SERVER_TAKE_FAILED == ret) {
-      // Ignore take failure because connext fails if it receives a sample without valid data.
-      // This happens when a client shuts down and connext receives a sample saying the client is
-      // no longer alive.
-      return;
-    } else if (RCL_RET_OK != ret) {
-      rclcpp::exceptions::throw_from_rcl_error(ret);
-    }
     data = std::static_pointer_cast<void>(
       std::make_shared
-      <std::tuple<rcl_action_goal_info_t, rmw_request_id_t, std::shared_ptr<void>>>(
+      <std::tuple<rcl_ret_t, rcl_action_goal_info_t, rmw_request_id_t, std::shared_ptr<void>>>(
+        ret,
         goal_info,
         request_header, message));
   } else if (pimpl_->cancel_request_ready_) {
@@ -235,18 +228,10 @@ ServerBase::take_data(std::shared_ptr<void> & data)
       &request_header,
       request.get());
 
-    if (RCL_RET_ACTION_SERVER_TAKE_FAILED == ret) {
-      // Ignore take failure because connext fails if it receives a sample without valid data.
-      // This happens when a client shuts down and connext receives a sample saying the client is
-      // no longer alive.
-      return;
-    } else if (RCL_RET_OK != ret) {
-      rclcpp::exceptions::throw_from_rcl_error(ret);
-    }
     data = std::static_pointer_cast<void>(
       std::make_shared
-      <std::pair<std::shared_ptr<action_msgs::srv::CancelGoal::Request>,
-      rmw_request_id_t>>(request, request_header));
+      <std::tuple<rcl_ret_t, std::shared_ptr<action_msgs::srv::CancelGoal::Request>,
+      rmw_request_id_t>>(ret, request, request_header));
   } else if (pimpl_->result_request_ready_) {
     rcl_ret_t ret;
     // Get the result request message
@@ -256,17 +241,9 @@ ServerBase::take_data(std::shared_ptr<void> & data)
     ret = rcl_action_take_result_request(
       pimpl_->action_server_.get(), &request_header, result_request.get());
 
-    if (RCL_RET_ACTION_SERVER_TAKE_FAILED == ret) {
-      // Ignore take failure because connext fails if it receives a sample without valid data.
-      // This happens when a client shuts down and connext receives a sample saying the client is
-      // no longer alive.
-      return;
-    } else if (RCL_RET_OK != ret) {
-      rclcpp::exceptions::throw_from_rcl_error(ret);
-    }
     data = std::static_pointer_cast<void>(
-      std::make_shared<std::pair<std::shared_ptr<void>, rmw_request_id_t>>(
-        result_request, request_header));
+      std::make_shared<std::tuple<rcl_ret_t, std::shared_ptr<void>, rmw_request_id_t>>(
+        ret, result_request, request_header));
   } else if (pimpl_->goal_expired_) {
     return;
   } else {
@@ -298,10 +275,20 @@ void
 ServerBase::execute_goal_request_received(std::shared_ptr<void> & data)
 {
   auto shared_ptr = std::static_pointer_cast
-    <std::tuple<rcl_action_goal_info_t, rmw_request_id_t, std::shared_ptr<void>>>(data);
-  rcl_action_goal_info_t goal_info = std::get<0>(*shared_ptr);
-  rmw_request_id_t request_header = std::get<1>(*shared_ptr);
-  std::shared_ptr<void> message = std::get<2>(*shared_ptr);
+    <std::tuple<rcl_ret_t, rcl_action_goal_info_t, rmw_request_id_t, std::shared_ptr<void>>>(data);
+  rcl_ret_t ret = std::get<0>(*shared_ptr);
+  if (RCL_RET_ACTION_SERVER_TAKE_FAILED == ret) {
+    // Ignore take failure because connext fails if it receives a sample without valid data.
+    // This happens when a client shuts down and connext receives a sample saying the client is
+    // no longer alive.
+    return;
+  } else if (RCL_RET_OK != ret) {
+    rclcpp::exceptions::throw_from_rcl_error(ret);
+  }
+  rcl_action_goal_info_t goal_info = std::get<1>(*shared_ptr);
+  rmw_request_id_t request_header = std::get<2>(*shared_ptr);
+  std::shared_ptr<void> message = std::get<3>(*shared_ptr);
+
 
   std::lock_guard<std::recursive_mutex> lock(pimpl_->reentrant_mutex_);
 
@@ -313,7 +300,7 @@ ServerBase::execute_goal_request_received(std::shared_ptr<void> & data)
   // Call user's callback, getting the user's response and a ros message to send back
   auto response_pair = call_handle_goal_callback(uuid, message);
 
-  rcl_ret_t ret = rcl_action_send_goal_response(
+  ret = rcl_action_send_goal_response(
     pimpl_->action_server_.get(),
     &request_header,
     response_pair.second.get());
@@ -371,9 +358,19 @@ void
 ServerBase::execute_cancel_request_received(std::shared_ptr<void> & data)
 {
   auto shared_ptr = std::static_pointer_cast
-    <std::pair<std::shared_ptr<action_msgs::srv::CancelGoal::Request>, rmw_request_id_t>>(data);
-  auto request = (*shared_ptr).first;
-  auto request_header = (*shared_ptr).second;
+    <std::tuple<rcl_ret_t, std::shared_ptr<action_msgs::srv::CancelGoal::Request>,
+      rmw_request_id_t>>(data);
+  auto ret = std::get<0>(*shared_ptr);
+  if (RCL_RET_ACTION_SERVER_TAKE_FAILED == ret) {
+    // Ignore take failure because connext fails if it receives a sample without valid data.
+    // This happens when a client shuts down and connext receives a sample saying the client is
+    // no longer alive.
+    return;
+  } else if (RCL_RET_OK != ret) {
+    rclcpp::exceptions::throw_from_rcl_error(ret);
+  }
+  auto request = std::get<1>(*shared_ptr);
+  auto request_header = std::get<2>(*shared_ptr);
 
   std::lock_guard<std::recursive_mutex> lock(pimpl_->reentrant_mutex_);
 
@@ -386,7 +383,7 @@ ServerBase::execute_cancel_request_received(std::shared_ptr<void> & data)
   // Get a list of goal info that should be attempted to be cancelled
   rcl_action_cancel_response_t cancel_response = rcl_action_get_zero_initialized_cancel_response();
 
-  rcl_ret_t ret = rcl_action_process_cancel_request(
+  ret = rcl_action_process_cancel_request(
     pimpl_->action_server_.get(),
     &cancel_request,
     &cancel_response);
@@ -444,9 +441,19 @@ void
 ServerBase::execute_result_request_received(std::shared_ptr<void> & data)
 {
   auto shared_ptr = std::static_pointer_cast
-    <std::pair<std::shared_ptr<void>, rmw_request_id_t>>(data);
-  auto result_request = (*shared_ptr).first;
-  auto request_header = (*shared_ptr).second;
+    <std::tuple<rcl_ret_t, std::shared_ptr<void>, rmw_request_id_t>>(data);
+  auto ret = std::get<0>(*shared_ptr);
+  if (RCL_RET_ACTION_SERVER_TAKE_FAILED == ret) {
+    // Ignore take failure because connext fails if it receives a sample without valid data.
+    // This happens when a client shuts down and connext receives a sample saying the client is
+    // no longer alive.
+    return;
+  } else if (RCL_RET_OK != ret) {
+    rclcpp::exceptions::throw_from_rcl_error(ret);
+  }
+  auto result_request = std::get<1>(*shared_ptr);
+  auto request_header = std::get<2>(*shared_ptr);
+
 
   std::lock_guard<std::recursive_mutex> lock(pimpl_->reentrant_mutex_);
   pimpl_->result_request_ready_ = false;
