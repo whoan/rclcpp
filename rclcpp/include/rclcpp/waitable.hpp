@@ -128,6 +128,11 @@ public:
 
   /// Take the data so that it can be consumed with `execute`.
   /**
+   * NOTE: take_data is a partial fix to a larger design issue with the
+   * multithreaded executor. This method is likely to be removed when
+   * a more permanent fix is implemented. A longterm fix is currently
+   * being discussed here: https://github.com/ros2/rclcpp/pull/1276
+   *
    * This method takes the data from the underlying data structure and
    * writes it to the void shared pointer `data` that is passed into the
    * method. The `data` can then be executed with the `execute` method.
